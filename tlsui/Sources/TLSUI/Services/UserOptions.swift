@@ -81,6 +81,7 @@ private final class AppDefaults: Sendable {
     }
 }
 
+@MainActor
 public final class UserOptions: ObservableObject {
     public init() {
         verboseLogging = AppDefaults.get(.verboseLogging)
