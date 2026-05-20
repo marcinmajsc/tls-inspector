@@ -19,6 +19,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Use Xcode 26.4
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           sudo xcode-select -s /Applications/Xcode_26.4.app/Contents/Developer
           echo "SWIFTLINT_CACHE_KEY=swiftlint_$(gh api repos/realm/swiftlint/releases/latest --jq '.assets[] | select(.name == "portable_swiftlint.zip") | .id')" >> "$GITHUB_OUTPUT"
