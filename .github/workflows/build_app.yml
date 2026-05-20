@@ -65,7 +65,7 @@ jobs:
           sed -i '' -E "s/(\t*MARKETING_VERSION *= *)[^ ;]+(;)/\1${{ github.event.inputs.version }}\2/" ./tls-inspector.xcodeproj/project.pbxproj
 
           xcodebuild \
-            -workspace "tls-inspector.xcodeproj" \
+            -project "tls-inspector.xcodeproj" \
             -scheme "TLS Inspector" \
             -configuration "Release" \
             -destination "generic/platform=iOS" \
