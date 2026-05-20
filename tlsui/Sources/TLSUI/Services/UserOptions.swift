@@ -98,10 +98,11 @@ public final class UserOptions: ObservableObject {
         advancedSettingsNagDismissed = AppDefaults.get(.advancedSettingsNagDismissed)
         cryptoEngine = CryptoEngine.init(rawValue: AppDefaults.get(.cryptoEngine)) ?? .NetworkFramework
         ipVersion = IPVersion.init(rawValue: AppDefaults.get(.ipVersion)) ?? .Automatic
-        appLanguage = SupportedLanguages.init(rawValue: AppDefaults.get(.appLanguage)) ?? .English
-        currentLanguage = appLanguage
+        let selectedLanguage = SupportedLanguages.init(rawValue: AppDefaults.get(.appLanguage)) ?? .English
+        appLanguage = selectedLanguage
         treatUnrecognizedAsTrusted = AppDefaults.get(.treatUnrecognizedAsTrusted)
         inspectTimeout = AppDefaults.get(.inspectTimeout)
+        currentLanguage = selectedLanguage
     }
 
     @Published public var verboseLogging: Bool {
