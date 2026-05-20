@@ -16,10 +16,10 @@ fi
 
 echo "Updating root CA bundles to ${LATEST_VERSION}..."
 
-curl -A "tls-inspector/tlskit" -Ss https://api.tlsinspector.com/rootca/metadata/${LATEST_VERSION} > bundle_metadata.json
-curl -A "tls-inspector/tlskit" -OSs https://api.tlsinspector.com/rootca/asset/${LATEST_VERSION}/bundle_metadata.json.sig
+curl -fL -A "tls-inspector/tlskit" -Ss https://api.tlsinspector.com/rootca/metadata/${LATEST_VERSION} > bundle_metadata.json
+curl -fL -A "tls-inspector/tlskit" -Ss "https://api.tlsinspector.com/rootca/asset/${LATEST_VERSION}/bundle_metadata.json.sig" -o bundle_metadata.json.sig
 
-echo -n "Validating bundle_metadata.json... "
+echo "Validating bundle_metadata.json... "
 openssl dgst -sha256 -verify signing_key.pem -signature bundle_metadata.json.sig bundle_metadata.json
 
 function download_bundle {
