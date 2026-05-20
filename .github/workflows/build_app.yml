@@ -2,6 +2,10 @@ name: Build TLS-Inspector Release IPA
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release"
+        required: true
 
 jobs:
   build-release-ipa:
@@ -47,6 +51,9 @@ jobs:
       - name: Archive TLS Inspector (Release, unsigned)
         run: |
           set -euo pipefail
+          
+          sed -i '' -E "s/(\t*MARKETING_VERSION *= *)[^ ;]+(;)/\1${{ github.event.inputs.version }}\2/" ./tls-inspector.xcodeproj/project.pbxproj
+
           xcodebuild \
             -workspace "tls-inspector.xcodeproj" \
             -scheme "TLS Inspector" \
