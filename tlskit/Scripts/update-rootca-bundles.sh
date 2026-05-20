@@ -20,15 +20,13 @@ curl -fL -Ss -A "tls-inspector/tlskit" "https://github.com/tls-inspector/rootca/
 curl -fL -Ss -A "tls-inspector/tlskit" "https://github.com/tls-inspector/rootca/releases/download/${LATEST_VERSION}/bundle_metadata.json.sig" -o bundle_metadata.json.sig
 
 echo "Validating bundle_metadata.json... "
-pwd
-ls -lah
 openssl dgst -sha256 -verify signing_key.pem -signature bundle_metadata.json.sig bundle_metadata.json
 
 function download_bundle {
     NAME=$1
 
-    curl -A "tls-inspector/tlskit" -OSs https://api.tlsinspector.com/rootca/asset/${LATEST_VERSION}/${NAME}_ca_bundle.pem
-    curl -A "tls-inspector/tlskit" -OSs https://api.tlsinspector.com/rootca/asset/${LATEST_VERSION}/${NAME}_ca_bundle.pem.sig
+    curl -A "tls-inspector/tlskit" -OSs https://github.com/tls-inspector/rootca/releases/download/${LATEST_VERSION}/${NAME}_ca_bundle.pem
+    curl -A "tls-inspector/tlskit" -OSs https://github.com/tls-inspector/rootca/releases/download/${LATEST_VERSION}/${NAME}_ca_bundle.pem.sig
 
     echo -n "Validating ${NAME}_ca_bundle.pem... "
     openssl dgst -sha256 -verify signing_key.pem -signature ${NAME}_ca_bundle.pem.sig ${NAME}_ca_bundle.pem
