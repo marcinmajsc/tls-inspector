@@ -69,6 +69,10 @@ private final class AppDefaults: Sendable {
         // swiftlint:enable force_cast
     }
 
+    public static func hasValue(_ key: AppDefaultsKeys) -> Bool {
+        s.object(forKey: key.rawValue) != nil
+    }
+
     public static func set(_ key: AppDefaultsKeys, _ value: Any) {
         LogWriter.shared.write(.Debug, message: "[\(#fileID):\(#line)] Set AppDefault: \(key) = \(value)")
         return s.set(value, forKey: key.rawValue)
@@ -84,7 +88,15 @@ private final class AppDefaults: Sendable {
 @MainActor
 public final class UserOptions: ObservableObject {
     public static func bootstrapLanguage() {
-        let selectedLanguage = SupportedLanguages.init(rawValue: AppDefaults.get(.appLanguage)) ?? .English
+        if !AppDefaults.hasValue(.appLanguage) {
+            let systemLanguageCode = Locale.preferredLanguages.first?.prefix(2).lowercased() ?? SupportedLanguages.English.rawValue
+            let selectedLanguage = SupportedLanguages(rawValue: String(systemLanguageCode)) ?? .English
+            AppDefaults.set(.appLanguage, selectedLanguage.rawValue)
+            currentLanguage = selectedLanguage
+            return
+        }
+
+        let selectedLanguage = SupportedLanguages(rawValue: AppDefaults.get(.appLanguage)) ?? .English
         currentLanguage = selectedLanguage
     }
 
