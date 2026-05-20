@@ -17,7 +17,7 @@ fi
 echo "Updating root CA bundles to ${LATEST_VERSION}..."
 
 echo "https://api.tlsinspector.com/rootca/asset/${LATEST_VERSION}/bundle_metadata.json"
-curl -i -L -A "tls-inspector/tlskit" -Ss "https://api.tlsinspector.com/rootca/asset/${LATEST_VERSION}/bundle_metadata.json" -o bundle_metadata.json
+curl --http1.1 -fL -Ss -A "Mozilla/5.0 TLSKit/1.0" -H "Accept: application/json" -Ss "https://api.tlsinspector.com/rootca/asset/${LATEST_VERSION}/bundle_metadata.json" -o bundle_metadata.json
 echo "https://api.tlsinspector.com/rootca/asset/${LATEST_VERSION}/bundle_metadata.json.sig"
 curl -i -L -A "tls-inspector/tlskit" -Ss "https://api.tlsinspector.com/rootca/asset/${LATEST_VERSION}/bundle_metadata.json.sig" -o bundle_metadata.json.sig
 
