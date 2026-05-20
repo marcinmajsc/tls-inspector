@@ -61,7 +61,7 @@ jobs:
       - name: Archive TLS Inspector (Release, unsigned)
         run: |
           set -euo pipefail
-          
+
           sed -i '' -E "s/(\t*MARKETING_VERSION *= *)[^ ;]+(;)/\1${{ github.event.inputs.version }}\2/" ./tls-inspector.xcodeproj/project.pbxproj
 
           xcodebuild \
@@ -92,5 +92,5 @@ jobs:
           name: TLS-Inspector-unsigned-ipa
           path: |
             build/TLS-Inspector-unsigned.ipa
-            build/TLS-Inspector.xcarchive
+            # build/TLS-Inspector.xcarchive
           if-no-files-found: error
