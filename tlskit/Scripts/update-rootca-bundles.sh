@@ -16,7 +16,7 @@ fi
 
 echo "Updating root CA bundles to ${LATEST_VERSION}..."
 
-curl -fL -A "tls-inspector/tlskit" -Ss https://api.tlsinspector.com/rootca/metadata/${LATEST_VERSION} > bundle_metadata.json
+curl -fL -A "tls-inspector/tlskit" -Ss "https://api.tlsinspector.com/rootca/metadata/${LATEST_VERSION}" -o bundle_metadata.json
 curl -fL -A "tls-inspector/tlskit" -Ss "https://api.tlsinspector.com/rootca/asset/${LATEST_VERSION}/bundle_metadata.json.sig" -o bundle_metadata.json.sig
 
 echo "Validating bundle_metadata.json... "
