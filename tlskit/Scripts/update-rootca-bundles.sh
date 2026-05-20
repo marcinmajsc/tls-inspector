@@ -5,7 +5,7 @@ ANCHORS_DIR=${1:?Must specify path to anchors directory}
 
 cd $ANCHORS_DIR
 CURRENT_VERSION=$(cat bundle_version.txt)
-LATEST_VERSION=$(curl -A "tls-inspector/tlskit" -Ss https://api.tlsinspector.com/rootca/latest | jq -r .version)
+LATEST_VERSION="bundle_20260429"
 
 if [[ -f bundle_metadata.json ]]; then
     if [[ $CURRENT_VERSION == $LATEST_VERSION ]]; then
