@@ -98,6 +98,7 @@ public final class UserOptions: ObservableObject {
         cryptoEngine = CryptoEngine.init(rawValue: AppDefaults.get(.cryptoEngine)) ?? .NetworkFramework
         ipVersion = IPVersion.init(rawValue: AppDefaults.get(.ipVersion)) ?? .Automatic
         appLanguage = SupportedLanguages.init(rawValue: AppDefaults.get(.appLanguage)) ?? .English
+        currentLanguage = appLanguage
         treatUnrecognizedAsTrusted = AppDefaults.get(.treatUnrecognizedAsTrusted)
         inspectTimeout = AppDefaults.get(.inspectTimeout)
     }
