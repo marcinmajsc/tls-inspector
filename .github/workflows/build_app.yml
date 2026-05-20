@@ -21,7 +21,10 @@ jobs:
       - name: Use Xcode 26.4
         run: |
           sudo xcode-select -s /Applications/Xcode_26.4.app/Contents/Developer
-
+          echo "SWIFTLINT_CACHE_KEY=swiftlint_$(gh api repos/realm/swiftlint/releases/latest --jq '.assets[] | select(.name == "portable_swiftlint.zip") | .id')" >> "$GITHUB_OUTPUT"
+          echo "ROOTCA=rootca_$(cat tlskit/Sources/TLSKit/External/Anchors/bundle_version.txt)" >> "$GITHUB_OUTPUT"
+          echo "CT_LOGS=ctlogs_$(cat tlskit/Sources/TLSKit/External/CT-Logs/ct_log_version.txt)" >> "$GITHUB_OUTPUT"
+          cat $GITHUB_OUTPUT
 
       - name: "Install SwiftLint"
         id: install_swiftlint
@@ -40,6 +43,11 @@ jobs:
         id: download_anchors
         run: |
           ./tlskit/Scripts/update-rootca-bundles.sh tlskit/Sources/TLSKit/External/Anchors
+
+      - name: "Download CT Logs"
+        id: download_ctlogs
+        run: |
+          ./tlskit/Scripts/update-ctlogs.sh "tlskit/Sources/TLSKit/External/CT-Logs"
 
       - name: "Resolve Package Dependencies"
         id: dependencies
