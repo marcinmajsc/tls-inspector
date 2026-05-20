@@ -25,8 +25,8 @@ openssl dgst -sha256 -verify signing_key.pem -signature bundle_metadata.json.sig
 function download_bundle {
     NAME=$1
 
-    curl -A "tls-inspector/tlskit" -OSs https://github.com/tls-inspector/rootca/releases/download/${LATEST_VERSION}/${NAME}_ca_bundle.pem
-    curl -A "tls-inspector/tlskit" -OSs https://github.com/tls-inspector/rootca/releases/download/${LATEST_VERSION}/${NAME}_ca_bundle.pem.sig
+    curl -fL -Ss -A "tls-inspector/tlskit" "https://github.com/tls-inspector/rootca/releases/download/${LATEST_VERSION}/${NAME}_ca_bundle.pem" -o ${NAME}_ca_bundle.pem
+    curl -fL -Ss -A "tls-inspector/tlskit" "https://github.com/tls-inspector/rootca/releases/download/${LATEST_VERSION}/${NAME}_ca_bundle.pem.sig" -o ${NAME}_ca_bundle.pem.sig
 
     echo -n "Validating ${NAME}_ca_bundle.pem... "
     openssl dgst -sha256 -verify signing_key.pem -signature ${NAME}_ca_bundle.pem.sig ${NAME}_ca_bundle.pem
