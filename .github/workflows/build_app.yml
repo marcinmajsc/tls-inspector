@@ -92,5 +92,5 @@ jobs:
           name: TLS-Inspector-unsigned-ipa
           path: |
             build/TLS-Inspector-unsigned.ipa
-            # build/TLS-Inspector.xcarchive
+            build/TLS-Inspector.xcarchive
           if-no-files-found: error

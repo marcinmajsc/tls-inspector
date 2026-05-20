@@ -81,7 +81,6 @@ private final class AppDefaults: Sendable {
     }
 }
 
-@MainActor
 public final class UserOptions: ObservableObject {
     public init() {
         verboseLogging = AppDefaults.get(.verboseLogging)
@@ -98,11 +97,9 @@ public final class UserOptions: ObservableObject {
         advancedSettingsNagDismissed = AppDefaults.get(.advancedSettingsNagDismissed)
         cryptoEngine = CryptoEngine.init(rawValue: AppDefaults.get(.cryptoEngine)) ?? .NetworkFramework
         ipVersion = IPVersion.init(rawValue: AppDefaults.get(.ipVersion)) ?? .Automatic
-        let selectedLanguage = SupportedLanguages.init(rawValue: AppDefaults.get(.appLanguage)) ?? .English
-        appLanguage = selectedLanguage
+        appLanguage = SupportedLanguages.init(rawValue: AppDefaults.get(.appLanguage)) ?? .English
         treatUnrecognizedAsTrusted = AppDefaults.get(.treatUnrecognizedAsTrusted)
         inspectTimeout = AppDefaults.get(.inspectTimeout)
-        currentLanguage = selectedLanguage
     }
 
     @Published public var verboseLogging: Bool {
