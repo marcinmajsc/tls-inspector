@@ -5,7 +5,7 @@ ANCHORS_DIR=${1:?Must specify path to anchors directory}
 
 cd $ANCHORS_DIR
 CURRENT_VERSION=$(cat bundle_version.txt)
-LATEST_VERSION=$(curl -A "tls-inspector/tlskit" -Ss https://api.tlsinspector.com/rootca/latest | jq -r .version)
+LATEST_VERSION="bundle_20260429"
 
 if [[ -f bundle_metadata.json ]]; then
     if [[ $CURRENT_VERSION == $LATEST_VERSION ]]; then
@@ -16,17 +16,17 @@ fi
 
 echo "Updating root CA bundles to ${LATEST_VERSION}..."
 
-curl -A "tls-inspector/tlskit" -Ss https://api.tlsinspector.com/rootca/metadata/${LATEST_VERSION} > bundle_metadata.json
-curl -A "tls-inspector/tlskit" -OSs https://api.tlsinspector.com/rootca/asset/${LATEST_VERSION}/bundle_metadata.json.sig
+curl -fL -Ss -A "tls-inspector/tlskit" "https://github.com/tls-inspector/rootca/releases/download/${LATEST_VERSION}/bundle_metadata.json" -o bundle_metadata.json
+curl -fL -Ss -A "tls-inspector/tlskit" "https://github.com/tls-inspector/rootca/releases/download/${LATEST_VERSION}/bundle_metadata.json.sig" -o bundle_metadata.json.sig
 
-echo -n "Validating bundle_metadata.json... "
+echo "Validating bundle_metadata.json... "
 openssl dgst -sha256 -verify signing_key.pem -signature bundle_metadata.json.sig bundle_metadata.json
 
 function download_bundle {
     NAME=$1
 
-    curl -A "tls-inspector/tlskit" -OSs https://api.tlsinspector.com/rootca/asset/${LATEST_VERSION}/${NAME}_ca_bundle.pem
-    curl -A "tls-inspector/tlskit" -OSs https://api.tlsinspector.com/rootca/asset/${LATEST_VERSION}/${NAME}_ca_bundle.pem.sig
+    curl -fL -Ss -A "tls-inspector/tlskit" "https://github.com/tls-inspector/rootca/releases/download/${LATEST_VERSION}/${NAME}_ca_bundle.pem" -o ${NAME}_ca_bundle.pem
+    curl -fL -Ss -A "tls-inspector/tlskit" "https://github.com/tls-inspector/rootca/releases/download/${LATEST_VERSION}/${NAME}_ca_bundle.pem.sig" -o ${NAME}_ca_bundle.pem.sig
 
     echo -n "Validating ${NAME}_ca_bundle.pem... "
     openssl dgst -sha256 -verify signing_key.pem -signature ${NAME}_ca_bundle.pem.sig ${NAME}_ca_bundle.pem

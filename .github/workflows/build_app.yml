@@ -1,88 +1,35 @@
-name: "Build & Test App"
+name: Build TLS-Inspector Release IPA
 
 on:
-  push:
-    paths:
-      - '.github/workflows/build_app.yml'
-      - 'tls-inspector.xcodeproj/**'
-      - 'tls-inspector/**'
-      - 'inspect-website/**'
-      - 'tlsui/**'
-      - 'tlskit/**'
-      - '.swiftlint.yml'
-  pull_request:
-    paths:
-      - 'tls-inspector.xcodeproj/**'
-      - 'tls-inspector/**'
-      - 'inspect-website/**'
-      - 'tlsui/**'
-      - 'tlskit/**'
-      - '.swiftlint.yml'
-
-permissions:
-  packages: read
-
-env:
-  TEST_DEVICE: "iPhone 17 Pro"
-  XCODE_VERSION: "Xcode_26.3" # https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release"
+        required: true
 
 jobs:
-  build:
-    name: "Build App"
+  build-release-ipa:
     runs-on: macos-26
+    env:
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+
     steps:
-      - name: Checkout Source
-        id: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #pin v6.0.2
-        with:
-          persist-credentials: false
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Install Profile and Certificates
-        id: install_credentials
-        run: |
-          echo '${{ secrets.TLS_INSPECTOR_DEVELOPMENT_PROVISIONING_PROFILE }}' > TLS_Inspector.mobileprovision.base64
-          echo '${{ secrets.INSPECT_CERTIFICATE_DEVELOPMENT_PROVISIONING_PROFILE }}' > Inspect_Website.mobileprovision.base64
-          base64 -i TLS_Inspector.mobileprovision.base64 -o TLS_Inspector.mobileprovision --decode && rm TLS_Inspector.mobileprovision.base64
-          base64 -i Inspect_Website.mobileprovision.base64 -o Inspect_Website.mobileprovision --decode && rm Inspect_Website.mobileprovision.base64
-          mkdir -p "~/Library/MobileDevice/Provisioning Profiles/"
-          mv -v TLS_Inspector.mobileprovision   "~/Library/MobileDevice/Provisioning Profiles/f2477cba-1359-4ec6-9ed6-cf8d0cbcc76f.mobileprovision"
-          mv -v Inspect_Website.mobileprovision "~/Library/MobileDevice/Provisioning Profiles/d6c2be10-51a7-476c-9b37-7ca5e8d22874.mobileprovision"
-          echo '-----BEGIN CERTIFICATE-----' > dev.crt
-          echo '${{ secrets.APPLE_DEVELOPMENT_CERTIFICATE }}' >> dev.crt
-          echo '-----END CERTIFICATE-----' >> dev.crt
-          echo '${{ secrets.APPLE_DEVELOPMENT_PRIVATE_KEY }}' > dev.key.base64
-          base64 -i dev.key.base64 -o dev.key --decode && rm dev.key.base64
-          security import dev.crt -t cert -k ~/Library/Keychains/login.keychain-db -f pemseq -A
-          echo 'imported dev.crt'
-          security import dev.key -t priv -k ~/Library/Keychains/login.keychain-db -f openssl -A
-          echo 'imported dev.key'
-          rm dev.key dev.crt
-
-      - name: "Prepare Build Environment"
-        id: prepare
+      - name: Use Xcode 26.4
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Switching to ${{ env.XCODE_VERSION }}"
-          sudo xcode-select -s /Applications/${{ env.XCODE_VERSION }}.app/Contents/Developer
-          xcode-select -p
-          mkdir -p /Users/runner/derived_data
+          sudo xcode-select -s /Applications/Xcode_26.4.app/Contents/Developer
           echo "SWIFTLINT_CACHE_KEY=swiftlint_$(gh api repos/realm/swiftlint/releases/latest --jq '.assets[] | select(.name == "portable_swiftlint.zip") | .id')" >> "$GITHUB_OUTPUT"
           echo "ROOTCA=rootca_$(cat tlskit/Sources/TLSKit/External/Anchors/bundle_version.txt)" >> "$GITHUB_OUTPUT"
           echo "CT_LOGS=ctlogs_$(cat tlskit/Sources/TLSKit/External/CT-Logs/ct_log_version.txt)" >> "$GITHUB_OUTPUT"
           cat $GITHUB_OUTPUT
 
-      - name: "Restore Cached SwiftLint"
-        id: restore_swiftlint
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 #pin v5.0.4
-        with:
-          key: ${{ steps.prepare.outputs.SWIFTLINT_CACHE_KEY }}
-          path: |
-            /Users/runner/bin/swiftlint
-
       - name: "Install SwiftLint"
         id: install_swiftlint
-        if: ${{ steps.restore_swiftlint.outputs.cache-hit != 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -94,84 +41,56 @@ jobs:
           rm swiftlint.zip LICENSE
           chmod a+x swiftlint
 
-      - name: "Restore Cached Anchors"
-        id: restore_anchors
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 #pin v5.0.4
-        with:
-          key: ${{ steps.prepare.outputs.ROOTCA }}
-          path: |
-            tlskit/Sources/TLSKit/External/Anchors/apple_ca_bundle.pem
-            tlskit/Sources/TLSKit/External/Anchors/google_ca_bundle.pem
-            tlskit/Sources/TLSKit/External/Anchors/microsoft_ca_bundle.pem
-            tlskit/Sources/TLSKit/External/Anchors/mozilla_ca_bundle.pem
-            tlskit/Sources/TLSKit/External/Anchors/tlsinspector_ca_bundle.pem
-            tlskit/Sources/TLSKit/External/Anchors/bundle_metadata.json
-
       - name: "Download Anchors"
         id: download_anchors
-        if: ${{ steps.restore_anchors.outputs.cache-hit != 'true' }}
         run: |
           ./tlskit/Scripts/update-rootca-bundles.sh tlskit/Sources/TLSKit/External/Anchors
 
-      - name: "Restore Cached CT Logs"
-        id: restore_ctlogs
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 #pin v5.0.4
-        with:
-          key: ${{ steps.prepare.outputs.CT_LOGS }}
-          path: |
-            tlskit/Sources/TLSKit/External/CT-Logs/ct_log_list.min.json
-
       - name: "Download CT Logs"
         id: download_ctlogs
-        if: ${{ steps.restore_ctlogs.outputs.cache-hit != 'true' }}
         run: |
           ./tlskit/Scripts/update-ctlogs.sh "tlskit/Sources/TLSKit/External/CT-Logs"
 
-      - name: "Build"
-        id: build
+      - name: "Resolve Package Dependencies"
+        id: dependencies
         run: |
           echo "resolvePackageDependencies"
           xcodebuild -resolvePackageDependencies -project "tls-inspector.xcodeproj"
-          echo "Inspect Website"
-          xcodebuild -scheme "Inspect Website" -project "tls-inspector.xcodeproj" -derivedDataPath ~/derived_data -sdk iphonesimulator -destination 'platform=iOS Simulator,arch=arm64,name=${{ env.TEST_DEVICE }}' build
-          echo "TLS Inspector"
-          xcodebuild -scheme "TLS Inspector" -project "tls-inspector.xcodeproj" -derivedDataPath ~/derived_data -sdk iphonesimulator -destination 'platform=iOS Simulator,arch=arm64,name=${{ env.TEST_DEVICE }}' build
 
-      - name: "Install Go"
-        id: install_go
-        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 #pin v6.3.0
+
+      - name: Archive TLS Inspector (Release, unsigned)
+        run: |
+          set -euo pipefail
+
+          sed -i '' -E "s/(\t*MARKETING_VERSION *= *)[^ ;]+(;)/\1${{ github.event.inputs.version }}\2/" ./tls-inspector.xcodeproj/project.pbxproj
+
+          xcodebuild \
+            -project "tls-inspector.xcodeproj" \
+            -scheme "TLS Inspector" \
+            -configuration "Release" \
+            -destination "generic/platform=iOS" \
+            -archivePath "$GITHUB_WORKSPACE/build/TLS-Inspector.xcarchive" \
+            clean archive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Create unsigned IPA from archive
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find "$GITHUB_WORKSPACE/build/TLS-Inspector.xcarchive/Products/Applications" -maxdepth 1 -type d -name "*.app" | head -n 1)"
+          test -d "$APP_PATH"
+          rm -rf "$GITHUB_WORKSPACE/build/Payload"
+          mkdir -p "$GITHUB_WORKSPACE/build/Payload"
+          cp -R "$APP_PATH" "$GITHUB_WORKSPACE/build/Payload/"
+          cd "$GITHUB_WORKSPACE/build"
+          zip -qry "TLS-Inspector-unsigned.ipa" "Payload"
+
+      - name: Upload unsigned IPA artifact
+        uses: actions/upload-artifact@v4
         with:
-          go-version: "stable"
-          cache-dependency-path: tlskit/Tests/TLSKitTests/TestServer/go.sum
-
-      - name: Prepare Test Server
-        id: testserver_prepare
-        run: |
-          cd tlskit/Tests/TLSKitTests/TestServer
-          echo "Compiling test server"
-          CGO_ENABLED=0 go build
-          echo "Generating certifiate & key"
-          ./TestServer -g
-          xcrun simctl boot "${{ env.TEST_DEVICE }}"
-          xcrun simctl keychain "${{ env.TEST_DEVICE }}" add-root-cert ./root.crt
-
-      - name: "Start Test Server"
-        id: testserver_start
-        shell: bash
-        run: |
-          cd tlskit/Tests/TLSKitTests/TestServer
-          nohup ./TestServer -c root.crt -k root.key &
-
-      - name: "Run Automated Tests"
-        id: certificatekit_tests
-        run: |
-          cd tlskit
-          xcodebuild -list
-          xcodebuild -scheme TLSKit test -derivedDataPath ~/derived_data -destination "platform=iOS Simulator,arch=arm64,name=${{ env.TEST_DEVICE }}"
-
-      - name: "Upload Test Results"
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f #pin v7.0.0
-        if: failure()
-        with:
-          name: test-results
-          path: /Users/runner/derived_data/Logs/Test/Test-TLSKit-*.xcresult
+          name: TLS-Inspector-unsigned-ipa
+          path: |
+            build/TLS-Inspector-unsigned.ipa
+            # build/TLS-Inspector.xcarchive
+          if-no-files-found: error
